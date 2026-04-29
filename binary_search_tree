@@ -1,0 +1,137 @@
+#include <stdio.h>
+#include <stdlib.h>
+//introduce la struct iniziale
+struct tree {
+    int val;
+    struct tree *left;
+    struct tree *right;
+};
+// questa funzione agginge un nodo
+struct tree *add(struct tree *root, int n){
+    
+    if (root == NULL) { //se root è null vuol dire che ha trovato uno spazio vuoto in cui scrivere
+        struct tree *node = malloc(sizeof(struct tree));
+        if (node == NULL) {printf("errore"); exit(EXIT_FAILURE);}
+        node->val = n;
+        node->left = NULL;
+        node->right = NULL;
+        return node;
+    }
+    if (n < root->val){
+        root->left = add(root->left, n);
+    }
+    else {
+        root->right = add(root->right, n);
+    }
+    
+return root;   
+}
+// stampa i valori dal più piccolo al più grande
+void print_list(struct tree *root){
+    if (root == NULL) return;
+    print_list(root->left);
+    printf("%d ",root->val);
+    print_list(root->right);
+}
+//free di malloc
+void free_list(struct tree *root){
+    if (root == NULL) return;
+    free_list(root->left);
+    free_list(root->right);
+    free(root);
+    
+}
+// cerca un numero nella lista, se c'è restituisce 1 altrimenti 0
+int search_list(struct tree *root, int target){
+    if (root == NULL) return 0;
+    if (target == root->val) return 1;
+    if (target < root->val) return search_list(root->left, target);
+    if (target > root->val) return search_list(root->right, target);
+    return 0;
+
+}
+// questa è una funzione di supporto a delete_node
+struct tree *find_node(struct tree *node){
+    struct tree *current = node;
+    while (current->left != NULL) {
+        current = current->left;
+    }
+    return current;
+}
+// cancella un elemento scelto
+struct tree *delete_node(struct tree *root, int target) {
+    // 1. Caso base (albero vuoto o nodo non trovato)
+    if (root == NULL) return root;
+
+    // 2. Navigazione (Esattamente come in 'add')
+    if (target < root->val) {
+        root->left = delete_node(root->left, target);
+    } 
+    else if (target > root->val) {
+        root->right = delete_node(root->right, target);
+    } 
+    // 3. NODO TROVATO! (target == root->val)
+    else {
+        // Se non ha il figlio sinistro (Caso 1 o Caso 2 ramo destro)
+        if (root->left == NULL) {
+            struct tree *temp = root->right;
+            free(root);
+            return temp;
+        }
+        // Se non ha il figlio destro (Caso 2 ramo sinistro)
+        else if (root->right == NULL) {
+            struct tree *temp = root->left;
+            free(root);
+            return temp;
+        }
+        // Se ha entrambi i rami
+        else {
+            struct tree *temp = find_node(root->right);
+            root->val = temp->val;
+            root->right = delete_node(root->right, root->val);
+        }
+    }
+    return root;
+}
+
+
+int main(){
+    struct tree *root = NULL; //punta alla radice dell'albero, il primo nodo
+    char n[20];
+
+    while (1){
+    char *endptr;
+    long int val;
+    printf("Inserisci un numero, premi 'e' per uscire: ");
+    scanf("%19s", n);
+    if (n[0] == 'e') break;
+    val = strtol(n, &endptr, 10);
+    if (n == endptr) {
+        printf("Errore: Nessun numero trovato nella stringa.\n");
+    } else if (*endptr != '\0') {
+        printf("Attenzione: La stringa conteneva caratteri extra oltre al numero.\n");
+    } else if(*endptr == '\0') {
+        root = add(root, val); //assegna il risultato della funzione a root
+    }
+    }
+    print_list(root);
+    int num;
+    printf("Scrivi un numero da cercare: ");
+    scanf("%d", &num);
+    int found = search_list(root, num);
+    if (found == 1) printf("Il numero %d è nella lista", num); 
+    else printf("Il numero %d non è nella lista", num);
+    int num_del;
+    found = 0;
+    while (found != 1){
+    printf("\nScrivi un numero da cancellare: ");
+    scanf("%d", &num_del);
+    found = search_list(root, num_del);
+    if (found == 1) printf("Il numero %d è nella lista, procedo a cancellarlo!\n", num_del); 
+    else printf("Il numero %d non è nella lista. Riprova.\n", num_del);
+    }
+    root = delete_node(root, num_del);
+    print_list(root);
+    free_list(root);
+    return 0;
+}

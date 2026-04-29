@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define NUM_ROWS 10
+#define NUM_COLS 20
+#define CELL(r, c) ((r) * NUM_COLS + (c))
+
+void set_grid (char *grid){
+    for (int i = 0; i < NUM_COLS * NUM_ROWS; i++){
+        if (i >= NUM_COLS * (NUM_ROWS - 1)){
+            grid[i] = '#';
+        }
+        else if (i % NUM_COLS == 0 || (i + 1) % NUM_COLS == 0){
+            grid[i] = '#';
+        }
+        else {
+            grid[i] = ' ';
+        }
+    }
+}
+
+void print_grid(char *grid){
+    for (int i = 0; i<NUM_COLS*NUM_ROWS; i++){
+        printf("%c", grid[i]);
+        if ((i + 1) % NUM_COLS == 0) {
+            printf("\n");
+        }
+    }
+}
+
+void falling(char *grid, char *new_grid){
+    for (int i=0; i<NUM_COLS*NUM_ROWS; i++){
+        if (grid[i] == 'O' && i < NUM_COLS * (NUM_ROWS - 1) && grid[i+NUM_COLS] == ' '){
+            new_grid[i+NUM_COLS] = 'O';
+            new_grid[i] = ' ';
+
+        }
+    }
+}
+
+int main(){
+    char grid[NUM_COLS*NUM_ROWS];
+    int end = 1;
+    set_grid(grid);
+    int r, c;
+   
+    printf("Inserisci riga e colonna (es: 1 5), -1 per terminare: ");
+    while (scanf("%d", &r) == 1 && r != -1) {
+        scanf("%d", &c);
+        if (r > 0 && r < NUM_ROWS - 1 && c > 0 && c < NUM_COLS - 1)
+            grid[CELL(r, c)] = 'O';
+        else
+            printf("Posizione non valida!\n");
+        system("clear"); // Pulisce lo schermo in modo sicuro
+        fflush(stdout);
+        print_grid(grid);
+        printf("Inserisci riga e colonna (es: 1 5), -1 per terminare: ");
+    }
+
+/*   
+    grid[CELL(0, 7)]  = 'O';
+    grid[CELL(0, 12)] = 'O';
+    grid[CELL(0, 13)] = 'O';
+    grid[CELL(1, 3)]  = 'O';
+    grid[CELL(1, 7)]  = 'O';
+    grid[CELL(1, 12)] = 'O';
+*/
+    system("clear"); // Pulizia iniziale dello schermo
+    fflush(stdout);
+    char *new_grid = malloc(sizeof(grid));
+    if (new_grid == NULL) {return 1;} // Errore: memoria esaurita
+    while(end != 0){
+        printf("\033[H"); // Riporta il cursore in alto (sovrascrive invece di cancellare, niente sfarfallio!)
+        fflush(stdout);
+        memcpy(new_grid, grid, sizeof(grid));
+        falling(grid, new_grid);
+        end = memcmp(grid, new_grid, sizeof(grid));
+        print_grid(new_grid);
+        memcpy(grid, new_grid, sizeof(grid));
+        
+        usleep(300000);
+    }
+    free(new_grid);
+    return 0;
+}

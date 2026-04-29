@@ -1,0 +1,117 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#define NUM_COL 20
+#define NUM_ROW 10
+#define DEAD '.'
+#define ALIVE '*'
+
+// Motore del gioco
+int check_neighbors(int cell_index, char grid[NUM_ROW*NUM_COL]){
+    int alive_neighbors = 0;
+    int r = cell_index / NUM_COL;
+    int c = cell_index % NUM_COL;
+    for (int i = -1; i <= 1; i++){
+        for (int j = -1; j <= 1; j++){
+            if (i == 0 && j == 0) continue; // Salta la cella stessa
+            int nr = (r + i + NUM_ROW) % NUM_ROW;
+            int nc = (c + j + NUM_COL) % NUM_COL;
+            if (grid[nr*NUM_COL + nc] == ALIVE){
+                alive_neighbors++;
+                }
+            }
+        }
+    return alive_neighbors;
+}
+void init_grid(char grid[NUM_ROW*NUM_COL]){
+    for(int i = 0; i < NUM_ROW*NUM_COL; i++){
+        grid[i] = DEAD;
+    }
+}
+// Stampa la griglia
+void print_grid(char grid[NUM_ROW*NUM_COL]){
+    system("clear");
+    printf("\n");
+    for (int i = 0; i < NUM_ROW; i++){
+        printf("%d ", i);
+        if (i < 10) {
+            printf(" "); // Aggiungo uno spazio extra per l'allineamento dei numeri a una cifra
+        }
+        for (int j = 0; j < NUM_COL; j++){
+            printf("%c", grid[i*NUM_COL + j]);
+        }
+        printf("\n");
+        
+    }
+}
+// Funzione per impostare lo stato di una cella specifica
+void set_cell(char grid[NUM_ROW*NUM_COL]){
+
+        int row, col;
+        char value;
+        system("clear");
+        printf("Inserisci la riga (0-%d): ", NUM_ROW - 1);
+        scanf("%d", &row);
+        printf("Inserisci la colonna (0-%d): ", NUM_COL - 1);
+        scanf("%d", &col);
+        printf("Inserisci il valore (d/a): ");
+        scanf(" %c", &value);
+        if (value == 'D' || value == 'd') {
+            value = DEAD;
+        } else if (value == 'A' || value == 'a') {
+            value = ALIVE;
+        } else {
+            printf("Valore non valido. Usa 'D' per morto e 'A' per vivo.\n");
+            return;
+        }
+        if (row < 0 || row >= NUM_ROW || col < 0 || col >= NUM_COL) {
+            printf("Coordinate non valide. Righe: 0-%d, Colonne: 0-%d.\n", NUM_ROW - 1, NUM_COL - 1);
+            return;
+        }
+        grid[row*NUM_COL + col] = value;
+        print_grid(grid);
+    
+}
+
+
+int main(void){
+    char grid[NUM_ROW*NUM_COL];
+    init_grid(grid);
+    print_grid(grid);
+    char exit= 'n';
+    while (exit != 's' && exit != 'S') {
+        set_cell(grid);
+        printf("Hai finito? (s/n): ");
+        scanf(" %c", &exit);
+    }
+    
+    while (1) { // Ciclo infinito per far scorrere le generazioni
+        char next_grid[NUM_ROW*NUM_COL]; // Creo una griglia temporanea
+        
+        // 1. Copia lo stato di partenza in next_grid
+        for (int i = 0; i < NUM_ROW*NUM_COL; i++) {
+            next_grid[i] = grid[i];
+        }
+        
+        // 2. Calcola le regole e applicale SOLO a next_grid
+        for (int i = 0; i < NUM_ROW*NUM_COL; i++){
+            int neighbors = check_neighbors(i, grid);
+            if (neighbors == 3 && grid[i] == DEAD){
+                next_grid[i] = ALIVE;
+            } else if ((neighbors < 2 || neighbors > 3) && grid[i] == ALIVE){
+                next_grid[i] = DEAD;
+            }
+        }
+        
+        // 3. Sovrascrivi la vecchia griglia con la nuova
+        for (int i = 0; i < NUM_ROW*NUM_COL; i++) {
+            grid[i] = next_grid[i];
+        }
+        
+        // 4. Stampa l'intera generazione e attendi
+        print_grid(grid);
+        usleep(100000); // Attendi 100ms
+    }
+    return 0;
+}
